@@ -7,7 +7,6 @@ class State(Enum):
     SAFE_LEVEL_CONFIRMED = auto()
     STARTUP_GRACE = auto()
     RUN = auto()
-    SAFE_STOP = auto()
     FAULT_FG_TIMEOUT = auto()
 
 
@@ -44,6 +43,10 @@ class PumpGuard:
             raise RuntimeError("Run is blocked until the hardware-safe PWM level is confirmed.")
         if not 0.0 < duty <= 1.0:
             raise ValueError("Duty must be in (0, 1].")
+        # A new run command starts a new evidence window.  Edges captured before
+        # this command must never authorize the new run or produce a fresh RPM.
+        self.last_fg_edge_s = None
+        self.last_fg_period_s = None
         self.commanded_duty = duty
         self.command_time_s = now_s
         self.state = State.STARTUP_GRACE
@@ -67,6 +70,7 @@ class PumpGuard:
         fg_age = float("inf") if self.last_fg_edge_s is None else now_s - self.last_fg_edge_s
         if fg_age > self.config.fg_timeout_s:
             self.commanded_duty = 0.0
+            self.last_fg_period_s = None
             self.state = State.FAULT_FG_TIMEOUT
         else:
             self.state = State.RUN
