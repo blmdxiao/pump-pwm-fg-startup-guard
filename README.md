@@ -8,7 +8,7 @@ The repository accompanies the engineering article **“The code has not run,
 but the pump is already at full speed.”** It provides:
 
 - a deterministic startup/FG timeout guard in `pump_guard.py`;
-- seven `unittest` checks in `test_pump_guard.py`;
+- eight `unittest` checks in `test_pump_guard.py`;
 - two reproducible synthetic timing figures;
 - an explicit boundary between rotor feedback and proof of liquid flow.
 
@@ -38,7 +38,7 @@ python -m unittest -v test_pump_guard.py
 Expected test summary:
 
 ```text
-Ran 7 tests
+Ran 8 tests
 OK
 ```
 
