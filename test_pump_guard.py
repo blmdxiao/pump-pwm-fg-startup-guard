@@ -35,6 +35,7 @@ class PumpGuardTests(unittest.TestCase):
         self.guard.on_fg_edge(0.20)
         self.assertEqual(self.guard.tick(0.40), State.FAULT_FG_TIMEOUT)
         self.assertEqual(self.guard.commanded_duty, 0.0)
+        self.assertIsNone(self.guard.rpm)
 
     def test_watchdog_reset_returns_to_boot_hiz(self):
         self.guard.confirm_hardware_safe_level(0.10)
@@ -42,6 +43,17 @@ class PumpGuardTests(unittest.TestCase):
         self.guard.reset()
         self.assertEqual(self.guard.state, State.BOOT_HIZ)
         self.assertEqual(self.guard.commanded_duty, 0.0)
+
+    def test_precommand_fg_is_not_reused_after_new_start(self):
+        self.guard.on_fg_edge(0.900000)
+        self.guard.on_fg_edge(0.906667)
+        self.assertGreater(self.guard.rpm, 0)
+
+        self.guard.confirm_hardware_safe_level(0.10)
+        self.guard.command_run(duty=0.5, now_s=1.0)
+
+        self.assertIsNone(self.guard.rpm)
+        self.assertEqual(self.guard.tick(1.31), State.FAULT_FG_TIMEOUT)
 
     def test_fg_does_not_prove_liquid_flow(self):
         self.guard.on_fg_edge(1.000000)
